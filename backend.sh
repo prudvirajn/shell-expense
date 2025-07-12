@@ -7,6 +7,8 @@ Y="\e[33m"
 N="\e[0m"
 
 LOGS_FOLDER="/var/log/expense-logs"
+mkdir -p $LOGS_FOLDER  # ✅ Ensures the log directory exists
+
 LOG_FILE=$(echo $0 | cut -d "." -f1 )
 TIMESTAMP=$(date +%Y-%m-%d-%H-%M-%S)
 LOG_FILE_NAME="$LOGS_FOLDER/$LOG_FILE-$TIMESTAMP.log"
@@ -25,7 +27,7 @@ CHECK_ROOT(){
     if [ $USERID -ne 0 ]
     then
         echo "ERROR:: You must have sudo access to execute this script"
-        exit 1 #other than 0
+        exit 1
     fi
 }
 
@@ -61,14 +63,12 @@ cd /app
 rm -rf /app/*
 
 unzip /tmp/backend.zip &>>$LOG_FILE_NAME
-VALIDATE $? "unzip backend"
+VALIDATE $? "Unzipping backend"
 
 npm install &>>$LOG_FILE_NAME
 VALIDATE $? "Installing dependencies"
 
 cp /home/ec2-user/expense-shell/backend.service /etc/systemd/system/backend.service
-
-# Prepare MySQL Schema
 
 dnf install mysql -y &>>$LOG_FILE_NAME
 VALIDATE $? "Installing MySQL Client"
@@ -77,10 +77,10 @@ mysql -h mysql.prudviraj.online -uroot -pExpenseApp@1 < /app/schema/backend.sql 
 VALIDATE $? "Setting up the transactions schema and tables"
 
 systemctl daemon-reload &>>$LOG_FILE_NAME
-VALIDATE $? "Daemon Reload"
+VALIDATE $? "Daemon reload"
 
 systemctl enable backend &>>$LOG_FILE_NAME
 VALIDATE $? "Enabling backend"
 
 systemctl restart backend &>>$LOG_FILE_NAME
-VALIDATE $? "Starting Backend"
+VALIDATE $? "Starting backend"
